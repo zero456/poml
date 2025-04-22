@@ -3,6 +3,7 @@ name: Full Test
 on:
   push:
     branches:
+      - main
       - master
 
 jobs:
