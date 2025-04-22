@@ -1,0 +1,1359 @@
+[
+  {
+    "name": "Document",
+    "description": "Displaying an external document like PDF, TXT or DOCX.",
+    "params": [
+      {
+        "name": "src",
+        "type": "string",
+        "choices": [],
+        "description": "The source file to read the data from. This must be provided if records is not provided.",
+        "required": false
+      },
+      {
+        "name": "buffer",
+        "type": "Buffer",
+        "fallbackType": "string",
+        "choices": [],
+        "description": "Document data buffer. Recommended to use `src` instead unless you want to use a string.",
+        "required": false
+      },
+      {
+        "name": "parser",
+        "type": "string",
+        "choices": [
+          "auto",
+          "pdf",
+          "docx",
+          "txt"
+        ],
+        "description": "The parser to use for reading the data. If not provided, it will be inferred from the file extension.",
+        "required": false
+      },
+      {
+        "name": "multimedia",
+        "type": "boolean",
+        "choices": [],
+        "description": "If true, the multimedias will be displayed. If false, the alt strings will be displayed at best effort. Default is `true`.",
+        "defaultValue": "true",
+        "required": false
+      },
+      {
+        "name": "selectedPages",
+        "type": "string",
+        "choices": [],
+        "description": "The pages to be selected. This is only available **for PDF documents**. If not provided, all pages will be selected.\nYou can use a string like `2` to specify a single page, or slice like `2:4` to specify a range of pages (2 inclusive, 4 exclusive).\nThe pages selected are **0-indexed**. Negative indexes like `-1` is not supported here.",
+        "required": false
+      }
+    ],
+    "example": "To display a Word document without including the real multimedia:\n```xml\n<Document src=\"sample.docx\" multimedia=\"false\"/>\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Role",
+    "description": "Specifies the role you want the language model to assume when responding.\nDefining a role provides the model with a perspective or context,\nsuch as a scientist, poet, child, or any other persona you choose.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the role paragraph. Default is `Role`.",
+        "defaultValue": "Role",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `role`.",
+        "defaultValue": "role",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<role>You are a data scientist.</role>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Task",
+    "description": "Task represents the action you want the language model to perform.\nIt is a directive or instruction that you want the model to follow.\nTask is usually not long, but rather a concise and clear statement.\nUsers can also include a list of steps or instructions to complete the task.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the task paragraph. Default is `Task`.",
+        "defaultValue": "Task",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `task`.",
+        "defaultValue": "task",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<task>Cook a recipe on how to prepare a beef dish.</task>\n```\n\nWhen including a list of steps:\n```xml\n<task>\n  Planning a schedule for a travel.\n  <list>\n    <item>Decide on the destination and plan the duration.</item>\n    <item>Find useful information about the destination.</item>\n    <item>Write down the schedule for each day.</item>\n  </list>\n</task>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "OutputFormat",
+    "description": "Output format deals with the format in which the model should provide the output.\nIt can be a specific format such as JSON, XML, or CSV, or a general format such as a story,\na diagram or steps of instructions.\nPlease refrain from specifying too complex formats that the model may not be able to generate,\nsuch as a PDF file or a video.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the output format paragraph. Default is `Output Format`.",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `outputFormat`.",
+        "defaultValue": "outputFormat",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<output-format>Respond with a JSON without additional characters or punctuations.</output-format>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "StepwiseInstructions",
+    "description": "StepwiseInstructions that elaborates the task by providing a list of steps or instructions.\nEach step should be concise and clear, and the list should be easy to follow.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the stepwise instructions paragraph. Default is `Stepwise Instructions`.",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `stepwiseInstructions`.",
+        "defaultValue": "stepwiseInstructions",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<stepwise-instructions>\n  <list>\n    <item>Interpret and rewrite user's query.</item>\n    <item>Think of a plan to solve the query.</item>\n    <item>Generate a response based on the plan.</item>\n  </list>\n</stepwise-instructions>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Hint",
+    "description": "Hint can be used anywhere in the prompt where you want to provide a helpful tip or explanation.\nIt is usually a short and concise statement that guides the LLM in the right direction.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the hint paragraph. Default is `Hint`.",
+        "defaultValue": "Hint",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `hint`.",
+        "defaultValue": "hint",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `bold`.",
+        "defaultValue": "bold",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionColon",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether to append a colon after the caption.\nBy default, this is true for `bold` or `plain` captionStyle, and false otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<hint>Alice first purchased 4 apples and then 3 more, so she has 7 apples in total.</hint>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Introducer",
+    "description": "Introducer is a paragraph before a long paragraph (usually a list of examples, steps, or instructions).\nIt serves as a context introducing what is expected to follow.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the introducer paragraph. Default is `Introducer`.",
+        "defaultValue": "Introducer",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `introducer`.",
+        "defaultValue": "introducer",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `hidden`.",
+        "defaultValue": "hidden",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<introducer>Here are some examples.</introducer>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "ExampleSet",
+    "description": "Example set (`<examples>`) is a collection of examples that are usually presented in a list.\nWith the example set, you can manage multiple examples under a single title and optionally an introducer,\nas well as the same `chat` format.\nYou can also choose to use `<example>` purely without example set.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the example set paragraph. Default is `Examples`.",
+        "defaultValue": "Examples",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `examples`.",
+        "defaultValue": "examples",
+        "required": false
+      },
+      {
+        "name": "chat",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether the examples should be rendered in chat format.\nBy default, it's `true` for \"markup\" syntaxes and `false` for \"serializer\" syntaxes.",
+        "required": false
+      },
+      {
+        "name": "introducer",
+        "type": "string",
+        "choices": [],
+        "description": "An optional introducer text to be displayed before the examples.\nFor example, `Here are some examples:`.",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<examples chat={{true}}>\n  <example>\n    <input>What is the capital of France?</input>\n    <output>Paris</output>\n  </example>\n  <example>\n    <input>What is the capital of Germany?</input>\n    <output>Berlin</output>\n  </example>\n</examples>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Example",
+    "description": "Example is useful for providing a context, helping the model to understand what kind of inputs and outputs are expected.\nIt can also be used to demonstrate the desired output style, clarifying the structure, tone, or level of detail in the response.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the example paragraph. Default is `Example`.",
+        "defaultValue": "Example",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `example`.",
+        "defaultValue": "example",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [],
+        "description": "Determines the style of the caption, applicable only for \"markup\" syntaxes. Default is `hidden`.\nOptions include `header`, `bold`, `plain`, or `hidden`.",
+        "defaultValue": "hidden",
+        "required": false
+      },
+      {
+        "name": "chat",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether the example should be rendered in chat format.\nWhen used in a example set (`<examples>`), this is inherited from the example set.\nOtherwise, it defaults to `false` for \"serializer\" syntaxes and `true` for \"markup\" syntaxes.",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes.\nOptions are `upper`, `lower`, `capitalize`, or `none`. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionColon",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether to append a colon after the caption.\nBy default, this is true for `bold` or `plain` captionStyle, and false otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<example>\n  <input>What is the capital of France?</input>\n  <output>Paris</output>\n</example>\n```\n\n```xml\n<task>Summarize the following passage in a single sentence.</task>\n<example>\n  <input caption=\"Passage\">The sun provides energy for life on Earth through processes like photosynthesis.</input>\n  <output caption=\"Summary\">The sun is essential for energy and life processes on Earth.</output>\n</example>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "ExampleInput",
+    "description": "ExampleInput (`<input>`) is a paragraph that represents an example input.\nBy default, it's spoken by a human speaker in a chat context, but you can manually specify the speaker.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the example input paragraph. Default is `Input`.",
+        "defaultValue": "Input",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `input`.",
+        "defaultValue": "input",
+        "required": false
+      },
+      {
+        "name": "speaker",
+        "type": "string",
+        "choices": [],
+        "description": "The speaker for the example input. Default is `human` if chat context is enabled (see `<example>`).",
+        "defaultValue": "human",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `hidden` if chat context is enabled. Otherwise, it's `bold`.",
+        "defaultValue": "hidden",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionColon",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether to append a colon after the caption.\nBy default, this is true for `bold` or `plain` captionStyle, and false otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<input>What is the capital of France?</input>\n```\n\nWhen used with a template:\n\n```xml\n<input>What is the capital of {{country}}?</input>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "ExampleOutput",
+    "description": "ExampleOutput (`<output>`) is a paragraph that represents an example output.\nBy default, it's spoken by a AI speaker in a chat context, but you can manually specify the speaker.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the example output paragraph. Default is `Output`.",
+        "defaultValue": "Output",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `output`.",
+        "defaultValue": "output",
+        "required": false
+      },
+      {
+        "name": "speaker",
+        "type": "string",
+        "choices": [],
+        "description": "The speaker for the example output. Default is `ai` if chat context is enabled (see `<example>`).",
+        "defaultValue": "ai",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `hidden` if chat context is enabled. Otherwise, it's `bold`.",
+        "defaultValue": "hidden",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionColon",
+        "type": "boolean",
+        "choices": [],
+        "description": "Indicates whether to append a colon after the caption.\nBy default, this is true for `bold` or `plain` captionStyle, and false otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<output>The capital of France is Paris.</output>\n```\n\nWhen used with a template:\n\n```xml\n<output>The capital of {{country}} is {{capital}}.</output>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Question",
+    "description": "Question (`<qa>`) is actually a combination of a question and a prompt for the answer.\nIt's usually used at the end of a prompt to ask a question.\nThe question is followed by a prompt for answer (e.g., `Answer:`) to guide the model to respond.",
+    "params": [
+      {
+        "name": "questionCaption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the question paragraph. Default is `Question`.",
+        "defaultValue": "Question",
+        "required": false
+      },
+      {
+        "name": "answerCaption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the answer paragraph. Default is `Answer`.",
+        "defaultValue": "Answer",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes. Default is `question`.",
+        "defaultValue": "question",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `bold`.",
+        "defaultValue": "bold",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<qa>What is the capital of France?</qa>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "SystemMessage",
+    "description": "Wrap the contents in a system message.",
+    "params": [],
+    "example": "```xml\n<system-msg>Answer concisely.</system-msg>\n```",
+    "baseComponents": [
+      "Text"
+    ]
+  },
+  {
+    "name": "HumanMessage",
+    "description": "Wrap the contents in a user message.",
+    "params": [],
+    "example": "```xml\n<user-msg>What is the capital of France?</user-msg>\n```",
+    "baseComponents": [
+      "Text"
+    ]
+  },
+  {
+    "name": "AiMessage",
+    "description": "Wrap the contents in a AI message.",
+    "params": [],
+    "example": "```xml\n<ai-msg>Paris</ai-msg>\n```",
+    "baseComponents": [
+      "Text"
+    ]
+  },
+  {
+    "name": "MessageContent",
+    "description": "Display a message content.",
+    "params": [
+      {
+        "name": "content",
+        "type": "object",
+        "fallbackType": "string",
+        "choices": [],
+        "description": "The content of the message. It can be a string, or an array of strings and multimedia content.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<msg-content content=\"What is the capital of France?\" />\n```",
+    "baseComponents": []
+  },
+  {
+    "name": "Conversation",
+    "description": "Display a conversation between system, human and AI.",
+    "params": [
+      {
+        "name": "messages",
+        "type": "object",
+        "choices": [],
+        "description": "A list of message. Each message should have a `speaker` and a `content` field.",
+        "required": false
+      },
+      {
+        "name": "selectedMessages",
+        "type": "string",
+        "choices": [],
+        "description": "The messages to be selected. If not provided, all messages will be selected.\nYou can use a string like `2` to specify a single message, or slice like `2:4` to specify a range of messages (2 inclusive, 4 exclusive).\nOr use `-6:` to select the last 6 messages.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<conversation messages=\"{{[{ speaker: 'human', content: 'What is the capital of France?' }, { speaker: 'ai', content: 'Paris' }]}}\" />\n```",
+    "baseComponents": []
+  },
+  {
+    "name": "Table",
+    "description": "Displaying a table with records and columns.",
+    "params": [
+      {
+        "name": "syntax",
+        "type": "string",
+        "choices": [
+          "markdown",
+          "html",
+          "json",
+          "text",
+          "csv",
+          "tsv",
+          "xml"
+        ],
+        "description": "The output syntax of the content.",
+        "required": false
+      },
+      {
+        "name": "records",
+        "type": "object",
+        "fallbackType": "string",
+        "choices": [],
+        "description": "A list, each element is an object / dictionary / list of elements. The keys are the fields and the values are the data in cells.",
+        "required": false
+      },
+      {
+        "name": "columns",
+        "type": "object",
+        "choices": [],
+        "description": "A list of column definitions. Each column definition is an object with keys \"field\", \"header\", and \"description\".\nThe field is the key in the record object, the header is displayed in the top row, and the description is meant to be an explanation.\nColumns are optional. If not provided, the columns are inferred from the records.",
+        "required": false
+      },
+      {
+        "name": "src",
+        "type": "string",
+        "choices": [],
+        "description": "The source file to read the data from. This must be provided if records is not provided.",
+        "required": false
+      },
+      {
+        "name": "parser",
+        "type": "string",
+        "choices": [
+          "auto",
+          "csv",
+          "tsv",
+          "excel",
+          "json",
+          "jsonl"
+        ],
+        "description": "The parser to use for reading the data. If not provided, it will be inferred from the file extension.",
+        "required": false
+      },
+      {
+        "name": "selectedColumns",
+        "type": "object",
+        "fallbackType": "string",
+        "choices": [],
+        "description": "The selected columns to display. If not provided, all columns will be displayed.\nIt should be an array of column field names, e.g. `[\"name\", \"age\"]`; or a string like `2:4` to select columns 2 (inclusive) to 4 (exclusive).\nThere is a special column name called `index` which is the enumeration of the records starting from 0.\nYou can also use a special value called `+index` to add the index column to the original table.",
+        "required": false
+      },
+      {
+        "name": "selectedRecords",
+        "type": "object",
+        "fallbackType": "string",
+        "choices": [],
+        "description": "The selected records to display. If not provided, all records will be displayed.\nIt should be an array of record indices, e.g. `[0, 1]`; or a string like `2:4` to select records 2 (inclusive) to 4 (exclusive).",
+        "required": false
+      },
+      {
+        "name": "maxRecords",
+        "type": "number",
+        "choices": [],
+        "description": "The maximum number of records to display. If not provided, all records will be displayed.",
+        "required": false
+      },
+      {
+        "name": "maxColumns",
+        "type": "number",
+        "choices": [],
+        "description": "The maximum number of columns to display. If not provided, all columns will be displayed.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<table records=\"{{[{ name: 'Alice', age: 20 }, { name: 'Bob', age: 30 }]}}\" />\n```\n\nTo import an excel file, and display the first 10 records in csv syntax:\n\n```xml\n<table src=\"data.xlsx\" parser=\"excel\" maxRecords=\"10\" syntax=\"csv\" />\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "CaptionedParagraph",
+    "description": "CaptionedParagraph (`<cp>` for short) creates a paragraph with a customized caption title.",
+    "params": [
+      {
+        "name": "caption",
+        "type": "string",
+        "choices": [],
+        "description": "The title or label for the paragraph. Required.",
+        "required": false
+      },
+      {
+        "name": "captionSerialized",
+        "type": "string",
+        "choices": [],
+        "description": "The serialized version of the caption when using \"serializer\" syntaxes.\n  By default, it's same as `caption`.",
+        "required": false
+      },
+      {
+        "name": "captionStyle",
+        "type": "string",
+        "choices": [
+          "header",
+          "bold",
+          "plain",
+          "hidden"
+        ],
+        "description": "Determines the style of the caption,\napplicable only for \"markup\" syntaxes. Default is `header`.",
+        "defaultValue": "header",
+        "required": false
+      },
+      {
+        "name": "captionTextTransform",
+        "type": "string",
+        "choices": [
+          "upper",
+          "level",
+          "capitalize",
+          "none"
+        ],
+        "description": "Specifies text transformation for the caption, applicable only for \"markup\" syntaxes. Default is `none`.",
+        "defaultValue": "none",
+        "required": false
+      },
+      {
+        "name": "captionEnding",
+        "type": "string",
+        "choices": [
+          "colon",
+          "newline",
+          "colon-newline",
+          "none"
+        ],
+        "description": "A caption can ends with a colon, a newline or simply nothing.\nIf not specified, it defaults to `colon` for `bold` or `plain` captionStyle, and `none` otherwise.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<cp caption=\"Constraints\">\n  <list>\n    <item>Do not exceed 1000 tokens.</item>\n    <item>Please use simple words.</item>\n  </list>\n</cp>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Text",
+    "description": "Text (`<text>`, `<poml>`) is a wrapper for any contents.\nBy default, it uses `markdown` syntax and writes the contents within it directly to the output.\nWhen used with \"markup\" syntaxes, it renders a standalone section preceded and followed by one blank line.\nIt's mostly used in the root element of a prompt, but it should also work in any other places.\nThis component will be automatically added as a wrapping root element if it's not provided:\n1. If the first element is pure text contents, `<poml syntax=\"text\">` will be added.\n2. If the first element is a POML component, `<poml syntax=\"markdown\">` will be added.",
+    "params": [
+      {
+        "name": "syntax",
+        "type": "string",
+        "choices": [
+          "markdown",
+          "html",
+          "json",
+          "yaml",
+          "xml",
+          "text"
+        ],
+        "description": "The syntax of the content.",
+        "required": false
+      },
+      {
+        "name": "className",
+        "type": "string",
+        "choices": [],
+        "description": "A class name for quickly styling the current block with stylesheets.",
+        "required": false
+      },
+      {
+        "name": "speaker",
+        "type": "string",
+        "choices": [
+          "human",
+          "ai",
+          "system"
+        ],
+        "description": "The speaker of the content. By default, it's determined by the context and the content.",
+        "required": false
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "choices": [],
+        "description": "The name of the content, used in serialization.",
+        "required": false
+      },
+      {
+        "name": "type",
+        "type": "string",
+        "choices": [],
+        "description": "The type of the content, used in serialization.",
+        "required": false
+      },
+      {
+        "name": "writerOptions",
+        "type": "object",
+        "choices": [],
+        "description": "An experimental optional JSON string to customize the format of markdown headers, JSON indents, etc.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<poml syntax=\"text\">\nContents of the whole prompt.\n\n1. Your customized list.\n2. You don't need to know anything about POML.\n</poml>\n```\n\nTo render the whole prompt in markdown syntax with a \"human\" speaker:\n\n```xml\n<poml syntax=\"markdown\" speaker=\"human\">\n  <p>You are a helpful assistant.</p>\n  <p>What is the capital of France?</p>\n</poml>\n```",
+    "baseComponents": []
+  },
+  {
+    "name": "Paragraph",
+    "description": "Paragraph (`<p>`) is a standalone section preceded by and followed by two blank lines in markup syntaxes.\nIt's mostly used for text contents.",
+    "params": [
+      {
+        "name": "blankLine",
+        "type": "boolean",
+        "choices": [],
+        "description": "Whether to add one more blank line (2 in total) before and after the paragraph.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<p>Contents of the paragraph.</p>\n```",
+    "baseComponents": [
+      "Text"
+    ]
+  },
+  {
+    "name": "Inline",
+    "description": "Inline (`<span>`) is a container for inline content.\nWhen used with markup syntaxes, it wraps text in an inline style, without any preceding or following blank characters.\nIn serializer syntaxes, it's treated as a generic value.\nInline elements are not designed to be used alone (especially in serializer syntaxes).\nOne might notice problematic renderings (e.g., speaker not applied) when using it alone.",
+    "params": [
+      {
+        "name": "syntax",
+        "type": "string",
+        "choices": [
+          "markdown",
+          "html",
+          "json",
+          "yaml",
+          "xml",
+          "text"
+        ],
+        "description": "The syntax of the content.",
+        "required": false
+      },
+      {
+        "name": "className",
+        "type": "string",
+        "choices": [],
+        "description": "A class name for quickly styling the current block with stylesheets.",
+        "required": false
+      },
+      {
+        "name": "speaker",
+        "type": "string",
+        "choices": [
+          "human",
+          "ai",
+          "system"
+        ],
+        "description": "The speaker of the content. By default, it's determined by the context and the content.",
+        "required": false
+      },
+      {
+        "name": "writerOptions",
+        "type": "object",
+        "choices": [],
+        "description": "An experimental optional JSON string to customize the format of markdown headers, JSON indents, etc.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<p>I'm listening to <span>music</span> right now.</p>\n```",
+    "baseComponents": []
+  },
+  {
+    "name": "Newline",
+    "description": "Newline (`<br>`) explicitly adds a line break, primarily in markup syntaxes.\nIn serializer syntaxes, it's ignored.",
+    "params": [
+      {
+        "name": "newLineCount",
+        "type": "number",
+        "choices": [],
+        "description": "The number of linebreaks to add.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<br />\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Header",
+    "description": "Header (`<h>`) renders headings in markup syntaxes.\nIt's commonly used to highlight titles or section headings.\nThe header level will be automatically computed based on the context.\nUse SubContent (`<section>`) for nested content.",
+    "params": [],
+    "example": "```xml\n<Header syntax=\"markdown\">Section Title</Header>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "SubContent",
+    "description": "SubContent (`<section>`) renders nested content, often following a header.\nThe headers within the section will be automatically adjusted to a lower level.",
+    "params": [],
+    "example": "```xml\n<h>Section Title</h>\n<section>\n  <h>Sub-section Title</h>  <!-- Nested header -->\n  <p>Sub-section details</p>\n</section>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Bold",
+    "description": "Bold (`<b>`) emphasizes text in a bold style when using markup syntaxes.",
+    "params": [],
+    "example": "```xml\n<p><b>Task:</b> Do something.</p>\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Italic",
+    "description": "Italic (`<i>`) emphasizes text in an italic style when using markup syntaxes.",
+    "params": [],
+    "example": "```xml\nYour <i>italicized</i> text.\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Strikethrough",
+    "description": "Strikethrough (`<s>`, `<strike>`) indicates removed or invalid text in markup syntaxes.",
+    "params": [],
+    "example": "```xml\n<s>This messages is removed.</s>\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Underline",
+    "description": "Underline (`<u>`) draws a line beneath text in markup syntaxes.",
+    "params": [],
+    "example": "```xml\nThis text is <u>underlined</u>.\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Code",
+    "description": "Code is used to represent code snippets or inline code in markup syntaxes.",
+    "params": [
+      {
+        "name": "inline",
+        "type": "boolean",
+        "choices": [],
+        "description": "Whether to render code inline or as a block. Default is `true`.",
+        "defaultValue": "true",
+        "required": false
+      },
+      {
+        "name": "lang",
+        "type": "string",
+        "choices": [],
+        "description": "The language of the code snippet.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<code inline=\"true\">const x = 42;</code>\n```\n\n```xml\n<code lang=\"javascript\">\nconst x = 42;\n</code>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "List",
+    "description": "List (`<list>`) is a container for multiple ListItem (`<item>`) elements.\nWhen used with markup syntaxes, a bullet or numbering is added.",
+    "params": [
+      {
+        "name": "listStyle",
+        "type": "string",
+        "choices": [
+          "star",
+          "dash",
+          "plus",
+          "decimal",
+          "latin"
+        ],
+        "description": "The style for the list marker, such as dash or star. Default is `dash`.",
+        "defaultValue": "dash",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<list listStyle=\"decimal\">\n  <item>Item 1</item>\n  <item>Item 2</item>\n</list>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "ListItem",
+    "description": "ListItem (`<item>`) is an item within a List component.\nIn markup mode, it is rendered with the specified bullet or numbering style.",
+    "params": [],
+    "example": "```xml\n<list listStyle=\"decimal\">\n  <item blankLine=\"true\">Item 1</item>\n  <item>Item 2</item>\n</list>\n```",
+    "baseComponents": [
+      "Paragraph"
+    ]
+  },
+  {
+    "name": "Object",
+    "description": "Object (`<obj>`, `<dataObj>`) displays external data or object content.\nWhen in serialize mode, it's serialized according to the given serializer.",
+    "params": [
+      {
+        "name": "syntax",
+        "type": "string",
+        "choices": [
+          "markdown",
+          "html",
+          "json",
+          "yaml",
+          "xml"
+        ],
+        "description": "The syntax or serializer of the content. Default is `json`.",
+        "defaultValue": "json",
+        "required": false
+      },
+      {
+        "name": "data",
+        "type": "object",
+        "choices": [],
+        "description": "The data object to render.",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<Object syntax=\"json\" data=\"{ key: 'value' }\" />\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  },
+  {
+    "name": "Image",
+    "description": "Image (`<img>`) displays an image in the content.\nAlternatively, it can also be shown as an alt text by specifying the `syntax` prop.\nNote that syntax must be specified as `multimedia` to show the image.",
+    "params": [
+      {
+        "name": "src",
+        "type": "string",
+        "choices": [],
+        "description": "The path to the image file.",
+        "required": false
+      },
+      {
+        "name": "alt",
+        "type": "string",
+        "choices": [],
+        "description": "The alternative text to show when the image cannot be displayed.",
+        "required": false
+      },
+      {
+        "name": "base64",
+        "type": "string",
+        "choices": [],
+        "description": "The base64 encoded image data. It can not be specified together with `src`.",
+        "required": false
+      },
+      {
+        "name": "type",
+        "type": "string",
+        "choices": [],
+        "description": "The MIME type of the image **to be shown**. If not specified, it will be inferred from the file extension.\n  If specified, the image will be converted to the specified type. Can be `image/jpeg`, `image/png`, etc., or without the `image/` prefix.",
+        "required": false
+      },
+      {
+        "name": "position",
+        "type": "string",
+        "choices": [
+          "top",
+          "bottom",
+          "here"
+        ],
+        "description": "The position of the image. Default is `here`.",
+        "defaultValue": "here",
+        "required": false
+      },
+      {
+        "name": "maxWidth",
+        "type": "number",
+        "choices": [],
+        "description": "The maximum width of the image to be shown.",
+        "required": false
+      },
+      {
+        "name": "maxHeight",
+        "type": "number",
+        "choices": [],
+        "description": "The maximum height of the image to be shown.",
+        "required": false
+      },
+      {
+        "name": "resize",
+        "type": "number",
+        "choices": [],
+        "description": "The ratio to resize the image to to be shown.",
+        "required": false
+      },
+      {
+        "name": "syntax",
+        "type": "string",
+        "choices": [
+          "markdown",
+          "html",
+          "json",
+          "yaml",
+          "xml",
+          "multimedia"
+        ],
+        "description": "Only when specified as `multimedia`, the image will be shown.\n  Otherwise, the alt text will be shown. By default, it's `multimedia` when `alt` is not specified. Otherwise, it's undefined (inherit from parent).",
+        "required": false
+      }
+    ],
+    "example": "```xml\n<Image src=\"path/to/image.jpg\" alt=\"Image description\" position=\"bottom\" />\n```",
+    "baseComponents": [
+      "Inline"
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+.vscode/**
+.vscode-test/**
+packages/**
+python/**
+examples/**
+.gitignore
+.yarnrc
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+**/.vscode-test.*
+webpack.config.*
+.pytest_cache/**

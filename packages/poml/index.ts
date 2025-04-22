@@ -1,0 +1,173 @@
+import * as React from 'react';
+import { readFileSync, writeFileSync } from 'fs';
+import { renderToString } from "react-dom/server";
+import { EnvironmentDispatcher } from "./writer";
+import { ErrorCollection, Message, RichContent, StyleSheetProvider } from './base';
+import { PomlFile, PomlReaderOptions } from './file';
+import './presentation';
+import './essentials';
+import "./components";
+import { reactRender } from './util/reactRender';
+
+export { RichContent, Message };
+
+export const read = async (
+  element: React.ReactElement | string,
+  options?: PomlReaderOptions,
+  context?: { [key: string]: any },
+  stylesheet?: { [key: string]: any },
+  sourcePath?: string,
+): Promise<string> => {
+  let readElement: React.ReactElement;
+  if (typeof element === 'string') {
+    readElement = new PomlFile(element, options, sourcePath).react(context);
+  } else {
+    if (options || context) {
+      console.warn('Options and context are ignored when element is React.ReactElement');
+    }
+    readElement = element;
+  }
+  if (stylesheet) {
+    readElement = React.createElement(StyleSheetProvider, { stylesheet }, readElement);
+  }
+  return await reactRender(readElement);
+};
+
+interface WriteOptions {
+  speaker?: boolean;
+}
+
+interface WriteOptionsNoSpeakerMode extends WriteOptions {
+  speaker?: false;
+}
+
+interface WriteOptionsSpeakerMode extends WriteOptions {
+  speaker: true;
+}
+
+
+export function write(ir: string, options?: WriteOptionsNoSpeakerMode): RichContent;
+export function write(ir: string, options: WriteOptionsSpeakerMode): Message[];
+export function write(ir: string, options?: WriteOptions): RichContent | Message[];
+export function write(ir: string, options?: WriteOptions): RichContent | Message[] {
+  const writer = new EnvironmentDispatcher();
+  if (options?.speaker) {
+    return writer.writeMessages(ir);
+  } else {
+    return writer.write(ir);
+  }
+};
+
+export const poml = async (element: React.ReactElement | string): Promise<RichContent> => {
+  ErrorCollection.clear();
+  const readResult = await read(element);
+  const result = write(readResult);
+  if (!ErrorCollection.empty()) {
+    throw ErrorCollection.first();
+  }
+  return result;
+}
+
+interface CliArgs {
+  input?: string;
+  file?: string;
+  output?: string;
+  context?: string[];
+  contextFile?: string;
+  stylesheet?: string;
+  stylesheetFile?: string;
+  trim?: boolean;
+  speakerMode?: boolean;
+  prettyPrint?: boolean;
+  strict?: boolean;
+}
+
+export async function commandLine(args: CliArgs) {
+  const readOptions = {
+    trim: args.trim,
+  };
+
+  let input: string;
+  if (args.input && args.file) {
+    throw new Error('Cannot specify both input and file');
+  } else if (args.input) {
+    input = args.input;
+  } else if (args.file) {
+    input = readFileSync(args.file, { encoding: 'utf8' });
+  } else {
+    throw new Error('Must specify either input or file');
+  }
+
+  let context: { [key: string]: any } = {};
+  if (args.context) {
+    for (const pair of args.context) {
+      if (!pair.includes('=')) {
+        throw new Error(`Invalid context variable, must include one '=': ${pair}`);
+      }
+      const [key, value] = pair.split('=', 2);
+      context[key] = value;
+    }
+  } else if (args.contextFile) {
+    const contextFromFile = JSON.parse(readFileSync(args.contextFile, { encoding: 'utf8' }));
+    context = { ...context, ...contextFromFile };
+  }
+
+  let stylesheet: { [key: string]: any } = {};
+  if (args.stylesheetFile) {
+    stylesheet = { ...stylesheet, ...JSON.parse(readFileSync(args.stylesheetFile, { encoding: 'utf8' })) };
+  }
+  if (args.stylesheet) {
+    stylesheet = { ...stylesheet, ...JSON.parse(args.stylesheet) };
+  }
+
+  ErrorCollection.clear();
+  const ir = await read(input, readOptions, context, stylesheet);
+
+  const speakerMode = args.speakerMode === true || args.speakerMode === undefined;
+  const prettyPrint = args.prettyPrint === true;
+  let output: string = '';
+  if (prettyPrint) {
+    if (speakerMode) {
+      const messages = write(ir, { speaker: true });
+      const outputs = messages.map((message) => {
+        return `===== ${message.speaker} =====\n\n${renderContent(message.content)}`
+      });
+      output = outputs.join('\n\n');
+    } else {
+      output = renderContent(write(ir));
+    }
+  } else {
+    output = JSON.stringify(write(ir, { speaker: speakerMode }));
+  }
+
+  if (args.strict === true || args.strict === undefined) {
+    if (!ErrorCollection.empty()) {
+      throw ErrorCollection.first();
+    }
+  }
+
+  if (args.output) {
+    writeFileSync(args.output, output);
+  } else {
+    process.stdout.write(output);
+  }
+}
+
+const renderContent = (content: RichContent) => {
+  if (typeof content === 'string') {
+    return content;
+  }
+  const outputs: string[] = content.map((part) => {
+    if (typeof part === 'string') {
+      return part;
+    } else {
+      const media = JSON.stringify(part);
+      if (media.length > 100) {
+        return media.slice(0, 100) + '...';
+      } else {
+        return media;
+      }
+    }
+  });
+  return outputs.join('\n\n');
+}

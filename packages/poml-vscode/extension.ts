@@ -1,0 +1,126 @@
+import * as path from 'path';
+import * as os from 'os';
+import * as vscode from 'vscode';
+
+import { CommandManager } from './util/commandManager';
+import * as command from './command';
+import { Logger } from './util/logger';
+import { POMLWebviewPanelManager } from './panel/manager';
+import {
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  TransportKind
+} from 'vscode-languageclient/node';
+import { initializeReporter, getTelemetryReporter, TelemetryClient } from './util/telemetryClient';
+import { TelemetryEvent } from './util/telemetryServer';
+
+let extensionPath = "";
+
+export function getExtensionPath(): string {
+  return extensionPath;
+}
+
+// This method is called when your extension is activated
+// Your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+  extensionPath = context.extensionPath;
+
+  const logger = new Logger();
+
+  const webviewManager = new POMLWebviewPanelManager(context, logger);
+
+  const commandManager = new CommandManager();
+  context.subscriptions.push(commandManager);
+  commandManager.register(new command.TestCommand(webviewManager));
+  commandManager.register(new command.TestNonChatCommand(webviewManager));
+  commandManager.register(new command.TestRerunCommand(webviewManager));
+  commandManager.register(new command.TestAbortCommand(webviewManager));
+  commandManager.register(new command.ShowPreviewCommand(webviewManager));
+  commandManager.register(new command.ShowPreviewToSideCommand(webviewManager));
+  commandManager.register(new command.ShowLockedPreviewToSideCommand(webviewManager));
+  commandManager.register(new command.ShowSourceCommand(webviewManager));
+  
+  const connectionString = getConnectionString();
+  if (connectionString) {
+    const reporter = initializeReporter(connectionString);
+    reporter.reportTelemetry(TelemetryEvent.Activate, environmentData());
+  }
+
+  // This must be after telemetry is initialized
+  commandManager.register(new command.TelemetryCompletionAcceptanceCommand(webviewManager));
+
+  activateClient(context, getTelemetryReporter());
+}
+
+// This method is called when your extension is deactivated
+export function deactivate() {
+  deactivateClient();
+}
+
+let client: LanguageClient;
+
+export function activateClient(context: vscode.ExtensionContext, reporter?: TelemetryClient) {
+  // The server is implemented in node
+  const serverModule = context.asAbsolutePath(
+    path.join('out', 'poml-vscode', 'lsp', 'server.js')
+  );
+
+  // If the extension is launched in debug mode then the debug server options are used
+  // Otherwise the run options are used
+  const serverOptions: ServerOptions = {
+    run: { module: serverModule, transport: TransportKind.ipc },
+    debug: {
+      module: serverModule,
+      transport: TransportKind.ipc,
+    }
+  };
+
+  // Options to control the language client
+  const clientOptions: LanguageClientOptions = {
+    // Register the server for plain text documents
+    documentSelector: [{ scheme: 'file', language: 'poml' }]
+  };
+
+  // Create the language client and start the client.
+  client = new LanguageClient(
+    'poml-vscode',
+    'POML Language Server',
+    serverOptions,
+    clientOptions
+  );
+
+  if (reporter) {
+    client.onTelemetry(reporter.handleDataFromServer, reporter);
+  }
+
+  // Start the client. This will also launch the server
+  client.start();
+}
+
+export function getClient(): LanguageClient {
+  return client;
+}
+
+export function deactivateClient(): Thenable<void> | undefined {
+  if (!client) {
+    return undefined;
+  }
+  return client.stop();
+}
+
+function environmentData(): { [key: string]: string | undefined } {
+  return {
+    version: vscode.extensions.getExtension('ms-poml.poml')?.packageJSON.version,
+    os: os.platform(),
+    osRelease: os.release(),
+    architecture: os.arch(),
+    vscodeVersion: vscode.version
+  };
+}
+
+function getConnectionString(): string | undefined {
+  return vscode.workspace
+    .getConfiguration('poml')
+    .get<string>('telemetry.connection');
+}

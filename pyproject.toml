@@ -1,0 +1,37 @@
+[project]
+name = "poml"
+version = "0.0.5"
+description = "Prompt Orchestration Markup Language"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+dependencies = [
+  "nodejs-wheel"
+]
+
+[project.optional-dependencies]
+dev = [
+  "black",
+  "flake8",
+  "pytest",
+  "hatch",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "*.js",
+  "*.py"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["python/poml"]
+artifacts = [
+  "*.js",
+]
+
+[project.scripts]
+poml-cli = "poml.cli:entrypoint"
