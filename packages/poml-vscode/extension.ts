@@ -63,7 +63,7 @@ let client: LanguageClient;
 export function activateClient(context: vscode.ExtensionContext, reporter?: TelemetryClient) {
   // The server is implemented in node
   const serverModule = context.asAbsolutePath(
-    path.join('out', 'poml-vscode', 'lsp', 'server.js')
+    path.join('dist', 'server.js')
   );
 
   // If the extension is launched in debug mode then the debug server options are used
@@ -111,7 +111,7 @@ export function deactivateClient(): Thenable<void> | undefined {
 
 function environmentData(): { [key: string]: string | undefined } {
   return {
-    version: vscode.extensions.getExtension('ms-poml.poml')?.packageJSON.version,
+    version: vscode.extensions.getExtension('poml-team.poml')?.packageJSON.version,
     os: os.platform(),
     osRelease: os.release(),
     architecture: os.arch(),
