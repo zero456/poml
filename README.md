@@ -40,11 +40,16 @@ This example defines a role and task for the LLM, includes an image for context,
 
 ### Visual Studio Code Extension
 
-*Coming soon:* Search for "POML" in the Visual Studio Code Marketplace to install the POML extension.
+Install from [Visual Studio Code Marketplace](https://marketplace.visualstudio.com/items?itemName=poml-team.poml).
 
-*Currently:* You can install the extension manually by downloading the `.vsix` file from our [GitHub releases page](https://github.com/microsoft/poml/releases) and installing it in VS Code via the Extensions view.
+You can also install the extension manually by downloading the `.vsix` file from our [GitHub releases page](https://github.com/microsoft/poml/releases) and installing it in VS Code via the Extensions view.
 
-You can also install POML using npm for Node.js projects or pip for Python projects.
+Before testing prompts with the POML toolkit, make sure you have configured your preferred LLM model, API key, and endpoint. If these are not set, prompt testing will not work.
+
+**To configure in Visual Studio Code:**
+- Open the extension settings (open "Settings" and search for "POML").
+- Set your model provider (e.g., OpenAI, Azure, Google), API key, and endpoint URL in the POML section.
+- Alternatively, you can add these settings directly to your `settings.json` file.
 
 ### Node.js (via npm, coming soon)
 
@@ -54,13 +59,11 @@ npm install poml
 
 ### Python (via pip)
 
-*Coming soon:*
-
 ```bash
 pip install poml
 ```
 
-*Currently:* For development or local installation, you might use `pip install -e .` from a cloned repository.
+For development or local installation, you might use `pip install -e .` from a cloned repository.
 
 ## Documentation
 
