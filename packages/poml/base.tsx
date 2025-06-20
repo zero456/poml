@@ -47,6 +47,9 @@ export interface PropsBase {
   originalStartIndex?: number;
   originalEndIndex?: number;
 
+  // Source path for diagnostics
+  sourcePath?: string;
+
   // Experimental
   writerOptions?: object;
   whiteSpace?: 'pre' | 'filter' | 'trim';
@@ -189,6 +192,7 @@ export class ReadError extends PomlError {
     message: string,
     public startIndex?: number,
     public endIndex?: number,
+    public sourcePath?: string,
     options?: PomlErrorOptions
   ) {
     super(message, options);
@@ -196,7 +200,7 @@ export class ReadError extends PomlError {
   }
 
   public static fromProps(message: string, props: PropsBase, options?: PomlErrorOptions) {
-    return new ReadError(message, props.originalStartIndex, props.originalEndIndex, options);
+    return new ReadError(message, props.originalStartIndex, props.originalEndIndex, props.sourcePath, options);
   }
 }
 
@@ -205,6 +209,7 @@ export class WriteError extends PomlError {
     message: string,
     public startIndex?: number,
     public endIndex?: number,
+    public sourcePath?: string,
     public irStartIndex?: number,
     public irEndIndex?: number,
     public relatedIr?: string,
