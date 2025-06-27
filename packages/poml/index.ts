@@ -119,8 +119,6 @@ export async function commandLine(args: CliArgs) {
   let workingDirectory: string;
   if (args.cwd) {
     workingDirectory = path.resolve(args.cwd);
-  } else if (args.file) {
-    workingDirectory = path.dirname(path.resolve(args.file));
   } else {
     workingDirectory = process.cwd();
   }
