@@ -14,6 +14,8 @@ import {
 } from 'vscode-languageclient/node';
 import { initializeReporter, getTelemetryReporter, TelemetryClient } from './util/telemetryClient';
 import { TelemetryEvent } from './util/telemetryServer';
+import { registerPomlChatParticipant } from './chat/participant';
+import { registerPromptGallery, PromptGalleryProvider } from './chat/gallery';
 
 let extensionPath = "";
 
@@ -29,6 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
   const logger = new Logger();
 
   const webviewManager = new POMLWebviewPanelManager(context, logger);
+  const galleryProvider = registerPromptGallery(context);
 
   const commandManager = new CommandManager();
   context.subscriptions.push(commandManager);
@@ -44,7 +47,12 @@ export function activate(context: vscode.ExtensionContext) {
   commandManager.register(new command.AddStylesheetFileCommand(webviewManager));
   commandManager.register(new command.RemoveContextFileCommand(webviewManager));
   commandManager.register(new command.RemoveStylesheetFileCommand(webviewManager));
-  
+  commandManager.register(new command.AddPromptCommand(galleryProvider));
+  commandManager.register(new command.DeletePromptCommand(galleryProvider));
+  commandManager.register(new command.EditPromptCommand(galleryProvider));
+
+  registerPomlChatParticipant(context, galleryProvider);
+
   const connectionString = getConnectionString();
   if (connectionString) {
     const reporter = initializeReporter(connectionString);
