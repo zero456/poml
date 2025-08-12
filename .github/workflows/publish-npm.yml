@@ -1,0 +1,75 @@
+name: NPM Release
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-version:
+    uses: ./.github/workflows/check-version.yml
+
+  publish-npm:
+    needs: check-version
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # IMPORTANT: this permission is mandatory for OIDC authentication
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Use Node.js 22.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build webview and CLI
+        run: |
+          npm run build-webview
+          npm run build-cli
+
+      - name: Build NPM package
+        run: |
+          cd packages/poml-build
+          npm pack
+          ls -la *.tgz
+
+      - name: Setup npm for publishing
+        run: |
+          echo "//registry.npmjs.org/:_authToken=\${NODE_AUTH_TOKEN}" > ~/.npmrc
+
+      - name: Publish to npm (dry-run for workflow_dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cd packages/poml-build
+          npm publish --dry-run
+          echo "Dry-run completed. Package would be published with these details:"
+          npm pack --json | jq '.[0]'
+
+      - name: Publish to npm (production)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          cd packages/poml-build
+          npm publish --provenance --access public
+
+      - name: Verify publication
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # Wait a bit for the package to be available
+          sleep 30
+          npm view pomljs@${{ needs.check-version.outputs.npm_version }}
+          echo "✅ Package successfully published to npm!"
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: packages/poml-build/*.tgz
+          compression-level: 0
