@@ -1,0 +1,84 @@
+name: Test on Nightly Packages
+
+on:
+  schedule:
+    - cron: '0 23 * * *'  # After package publish
+  workflow_dispatch:
+
+jobs:
+  node-package-test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Create clean test environment
+        run: |
+          mkdir -p /tmp/poml_test
+          cp -r examples /tmp/poml_test/
+      - name: Install POML nightly
+        run: |
+          cd /tmp/poml_test
+          npm init -y
+          npm install pomljs@nightly
+      - name: Test all .poml examples
+        run: |
+          cd /tmp/poml_test
+          set -ex
+          for poml_file in examples/*.poml; do
+            echo "Testing $poml_file"
+            npx poml "$poml_file"
+          done
+        shell: bash
+      - name: Copy and test API example
+        run: |
+          cp examples/401_pomljs_hello_world.mjs /tmp/poml_test/
+          cd /tmp/poml_test
+          node 401_pomljs_hello_world.mjs
+
+  python-package-test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: windows-latest
+          - os: macos-latest
+      fail-fast: false
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Create clean test environment
+        run: |
+          mkdir -p /tmp/poml_test
+          cp -r examples /tmp/poml_test/
+      - run: |
+          pip install --upgrade --pre --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ poml
+      - name: Test all .poml examples
+        run: |
+          cd /tmp/poml_test
+          set -ex
+          for poml_file in examples/*.poml; do
+            echo "Testing $poml_file"
+            poml-cli "$poml_file"
+          done
+        shell: bash
+      - name: Copy and test API example
+        run: |
+          cp examples/402_pomlpy_hello_world.py /tmp/poml_test/
+          cd /tmp/poml_test
+          python 402_pomlpy_hello_world.py
