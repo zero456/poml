@@ -316,12 +316,12 @@ describe('expressionEvaluation', () => {
   test('captures expression tokens for meta lang="expr"', () => {
     const text = `<poml>
       <let name="fields" value='["name", "age"]' />
-      <meta type="responseSchema" lang="expr">
+      <output-schema lang="expr">
         z.object({
           name: z.string(),
           age: z.number()
         })
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -335,7 +335,7 @@ describe('expressionEvaluation', () => {
     expect(letToken).toBeDefined();
     expect(letToken?.type).toBe('expression');
     
-    // Find the meta expr token
+    // Find the output-schema expr token
     const metaToken = tokens.find(t => t.expression?.includes('z.object'));
     expect(metaToken).toBeDefined();
     expect(metaToken?.type).toBe('expression');
@@ -357,9 +357,9 @@ describe('expressionEvaluation', () => {
     ErrorCollection.clear();
     const text = `<poml>
       <let name="num" value="42" />
-      <meta type="responseSchema" lang="expr">
+      <output-schema lang="expr">
         z.object({ value: z.number().max(num) })
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -566,7 +566,7 @@ describe('lspFeatures', () => {
 describe('meta elements', () => {
   test('responseSchema with JSON', () => {
     const text = `<poml>
-      <meta type="responseSchema" lang="json">
+      <output-schema lang="json">
         {
           "type": "object",
           "properties": {
@@ -575,7 +575,7 @@ describe('meta elements', () => {
           },
           "required": ["name"]
         }
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -594,12 +594,12 @@ describe('meta elements', () => {
   test('responseSchema with Zod', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="responseSchema">
+      <output-schema>
         z.object({
           name: z.string(),
           age: z.number().optional()
         })
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -613,7 +613,7 @@ describe('meta elements', () => {
 
   test('tool with JSON schema', () => {
     const text = `<poml>
-      <meta type="tool" name="getWeather" description="Get weather information">
+      <tool-definition name="getWeather" description="Get weather information">
         {
           "type": "object",
           "properties": {
@@ -622,7 +622,7 @@ describe('meta elements', () => {
           },
           "required": ["location"]
         }
-      </meta>
+      </tool-definition>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -638,13 +638,13 @@ describe('meta elements', () => {
   test('tool with Zod schema', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="tool" name="calculate" description="Perform calculation">
+      <tool-definition name="calculate" description="Perform calculation">
         z.object({
           operation: z.enum(['add', 'subtract']),
           a: z.number(),
           b: z.number()
         })
-      </meta>
+      </tool-definition>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -662,36 +662,36 @@ describe('meta elements', () => {
   test('multiple responseSchema error', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="responseSchema" lang="json">{"type": "string"}</meta>
-      <meta type="responseSchema" lang="json">{"type": "number"}</meta>
+      <output-schema lang="json">{"type": "string"}</output-schema>
+      <output-schema lang="json">{"type": "number"}</output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
     expect(ErrorCollection.empty()).toBe(false);
     const error = ErrorCollection.first();
-    expect(error.message).toContain('Multiple responseSchema meta elements found');
+    expect(error.message).toContain('Multiple output-schema elements found');
     ErrorCollection.clear();
   });
 
   test('tool without name error', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="tool" description="Missing name">
+      <tool description="Missing name">
         {"type": "object"}
-      </meta>
+      </tool>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
     expect(ErrorCollection.empty()).toBe(false);
     const error = ErrorCollection.first();
-    expect(error.message).toContain('name attribute is required for tool meta type');
+    expect(error.message).toContain('name attribute is required for tool definition');
     ErrorCollection.clear();
   });
 
-  test('runtime meta parameters', () => {
+  test('runtime parameters', () => {
     const text = `<poml>
-      <meta type="runtime" temperature="0.7" max_tokens="1000" model="gpt-4">
-      </meta>
+      <runtime temperature="0.7" max_tokens="1000" model="gpt-4">
+      </runtime>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -707,7 +707,7 @@ describe('meta elements', () => {
     ErrorCollection.clear();
     const text = `<poml>
       <let name="maxAge" value="100" />
-      <meta type="responseSchema" lang="json">
+      <output-schema lang="json">
         {
           "type": "object",
           "properties": {
@@ -719,7 +719,7 @@ describe('meta elements', () => {
             }
           }
         }
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -744,13 +744,13 @@ describe('meta elements', () => {
     ErrorCollection.clear();
     const text = `<poml>
       <let name="operations" value='["add", "subtract", "multiply", "divide"]' />
-      <meta type="tool" name="calculator" description="Math operations" lang="expr">
+      <tool-definition name="calculator" description="Math operations" lang="expr">
         z.object({
           operation: z.enum(operations),
           a: z.number(),
           b: z.number()
         })
-      </meta>
+      </tool-definition>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -769,13 +769,13 @@ describe('meta elements', () => {
     ErrorCollection.clear();
     const text = `<poml>
       <let name="fields" value='{ "name": "string", "age": "number" }' />
-      <meta type="responseSchema" lang="expr">
+      <output-schema lang="expr">
         z.object({
           name: z.string(),
           age: z.number(),
           timestamp: z.string().datetime()
         })
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -790,14 +790,14 @@ describe('meta elements', () => {
   test('malformed JSON syntax error', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="responseSchema" lang="json">
+      <output-schema lang="json">
         {
           "type": "object",
           "properties": {
             "name": { "type": "string" },
           }
         }
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -811,12 +811,12 @@ describe('meta elements', () => {
   test('invalid expression evaluation error', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="responseSchema" lang="expr">
+      <output-schema lang="expr">
         z.object({
           name: z.nonexistent(),
           age: z.number()
         })
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
@@ -829,9 +829,9 @@ describe('meta elements', () => {
   test('invalid OpenAPI schema structure', () => {
     ErrorCollection.clear();
     const text = `<poml>
-      <meta type="responseSchema" lang="json">
+      <output-schema lang="json">
         "not an object"
-      </meta>
+      </output-schema>
     </poml>`;
     const file = new PomlFile(text);
     file.react();
