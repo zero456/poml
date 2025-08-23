@@ -31,6 +31,8 @@ agent = [
   "weave",
   "langchain-openai",
   "openai",
+  "mcp",
+  "fastmcp",
 ]
 
 [build-system]
