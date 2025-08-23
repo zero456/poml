@@ -21,6 +21,41 @@ describe('endToEnd', () => {
     expect(element).toBe('Hello, world!');
   });
 
+  test('whiteSpace', async () => {
+    const text = `<poml>
+  <!-- Preserve exact formatting with 'pre' -->
+  <p whiteSpace="pre">This text    has multiple
+  spaces and
+      indentation preserved.
+
+
+      You can also include endless new lines.</p>
+
+  <!-- Normalize whitespace with 'filter' -->
+  <p whiteSpace="filter">This text    will have
+  normalized    spacing.
+
+  New lines will also be reduced to a space.
+  </p>
+
+  <!-- Trim whitespace with 'trim' -->
+  <p whiteSpace="trim">   This text will have leading    and trailing spaces removed.   </p>
+</poml>`;
+    const element = await poml(text);
+    expect(element).toBe(
+      `This text    has multiple
+  spaces and
+      indentation preserved.
+
+
+      You can also include endless new lines.
+
+This text will have normalized spacing. New lines will also be reduced to a space.
+
+This text will have leading    and trailing spaces removed.`
+    );
+  });
+
   test('charLimitEndToEnd', async () => {
     const text = '<p charLimit="4">abcdefg</p>';
     const element = await poml(text);
@@ -57,6 +92,77 @@ describe('endToEnd', () => {
       '<p tokenLimit="1"><span priority="1">hello</span><span priority="2">world</span></p>';
     const element = await poml(text);
     expect(element).toBe('world');
+  });
+
+  test('tokenControlDocExample1', async () => {
+    const text = `<poml>
+  <!-- Limit content to 100 characters -->
+  <p charLimit="100">This is a very long paragraph that will be truncated if it exceeds the character limit. The truncation will add a marker to indicate that content was cut off.</p>
+  
+  <!-- Limit content to 50 tokens -->
+  <p tokenLimit="10">This paragraph will be truncated based on token count rather than character count, which is more accurate for AI model processing.</p>
+</poml>`;
+    const element = await poml(text);
+    expect(element).toBe(`This is a very long paragraph that will be truncated if it exceeds the character limit. The truncati (...truncated)
+
+This paragraph will be truncated based on token count rather (...truncated)`);
+  });
+
+  test('tokenControlDocExample2', async () => {
+    const element = await poml(
+      <Markup.Paragraph
+        charLimit={20}
+        writerOptions={{ truncateMarker: ' [...] ', truncateDirection: 'middle' }}
+      >
+        This is a very long paragraph that will be truncated if it exceeds the character limit. The truncation will add a marker to indicate that content was cut off.
+      </Markup.Paragraph>
+    );
+    expect(element).toBe('This is a  [...] s cut off.');
+  });
+
+  test('tokenControlDocExample3', async () => {
+    const text = `<poml tokenLimit="40">
+  <p priority="1">This content has low priority and may be removed first to save space.</p>
+  
+  <p priority="3">This content has high priority and will be preserved longer.</p>
+  
+  <p priority="2">This content has medium priority.</p>
+  
+  <!-- Content without priority defaults to priority 0 (lowest) -->
+  <p>This content will be truncated first since it has no explicit priority.</p>
+</poml>`;
+    const element = await poml(text);
+    const expected = `This content has low priority and may be removed first to save space.
+
+This content has high priority and will be preserved longer.
+
+This content has medium priority.`;
+    expect(element).toBe(expected);
+  })
+
+  test('tokenControlDocExample4', async () => {
+    const text = `<poml tokenLimit="40">
+  <h priority="5">Critical Section Header</h>
+  
+  <p priority="4" charLimit="10">
+    Important introduction that should be preserved but can be shortened individually.
+  </p>
+  
+  <list priority="2">
+    <item priority="3">High priority item</item>
+    <item priority="1">Lower priority item</item>
+    <item>Lowest priority item (no explicit priority)</item>
+  </list>
+
+  <p priority="3" tokenLimit="5">Optional additional context that can be truncated aggressively.</p>
+</poml>`;
+    const element = await poml(text);
+    const expected = `# Critical Section Header
+
+Important  (...truncated)
+
+Optional additional context that can (...truncated)`;
+    expect(element).toBe(expected);
   });
 
   test('speakerWithStylesheet', async () => {
