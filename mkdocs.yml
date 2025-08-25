@@ -7,6 +7,9 @@ edit_uri: edit/main/docs/
 exclude_docs: |
   typescript/reference/README.md
 
+hooks:
+  - docs/hooks/commitlinks.py
+
 theme:
   name: material
   logo: media/logo-64-white.png
@@ -35,12 +38,16 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js
+
 plugins:
   - search
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
   - git-authors
+  - timetoread
   - mkdocstrings:
       handlers:
         python:
@@ -56,7 +63,11 @@ plugins:
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - admonition
@@ -70,6 +81,9 @@ nav:
   - Getting Started: index.md
   - Tutorial:
     - Quick Start: tutorial/quickstart.md
+    - Travel Expense Agent:
+      - Part 1 - Build Workflow: tutorial/expense_part1.md
+      - Part 2 - Debug with VS Code Extension: tutorial/expense_part2.md
   - Language Spec:
     - Basic Syntax: language/basic.md
     - Template Engine: language/template.md
