@@ -11,7 +11,7 @@ const pipeableStreamToString = async (stream: (destination: NodeJS.WritableStrea
         callback();
       },
       final(callback) {
-        resolve(Buffer.concat(chunks).toString());
+        resolve(Buffer.concat(chunks as readonly Uint8Array[]).toString());
         callback();
       },
       destroy(err, callback) {

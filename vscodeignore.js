@@ -69,6 +69,7 @@ out/**
 packages/**
 python/**
 examples/**
+test-fixtures/**
 .gitignore
 .yarnrc
 vsc-extension-quickstart.md
