@@ -40,9 +40,11 @@ let _globalGenerationController: GenerationController | undefined = undefined;
 
 class GenerationController {
   private readonly abortControllers: AbortController[];
+  private readonly cancellationTokens: vscode.CancellationTokenSource[];
 
   private constructor() {
     this.abortControllers = [];
+    this.cancellationTokens = [];
   }
 
   public static getNewAbortController() {
@@ -54,12 +56,25 @@ class GenerationController {
     return controller;
   }
 
+  public static getNewCancellationToken() {
+    if (!_globalGenerationController) {
+      _globalGenerationController = new GenerationController();
+    }
+    const tokenSource = new vscode.CancellationTokenSource();
+    _globalGenerationController.cancellationTokens.push(tokenSource);
+    return tokenSource;
+  }
+
   public static abortAll() {
     if (_globalGenerationController) {
       for (const controller of _globalGenerationController.abortControllers) {
         controller.abort();
       }
+      for (const tokenSource of _globalGenerationController.cancellationTokens) {
+        tokenSource.cancel();
+      }
       _globalGenerationController.abortControllers.length = 0;
+      _globalGenerationController.cancellationTokens.length = 0;
     }
   }
 }
@@ -136,15 +151,21 @@ export class TestCommand implements Command {
       return;
     }
 
-    const apiKey = this.getProviderApiKey(setting);
-    if (!apiKey) {
-      vscode.window.showWarningMessage('API key is not configured. Please set your API key in the extension settings.');
-      this.log('warn', 'API key is not configured for the provider.');
-    }
+    if (setting.provider !== 'vscode') {
+      const apiKey = this.getProviderApiKey(setting);
+      if (!apiKey) {
+        vscode.window.showWarningMessage(
+          'API key is not configured. Please set your API key in the extension settings.',
+        );
+        this.log('warn', 'API key is not configured for the provider.');
+      }
 
-    const apiUrl = this.getProviderApiUrl(setting);
-    if (!apiUrl) {
-      this.log('info', 'No API URL configured, using default for the provider.');
+      const apiUrl = this.getProviderApiUrl(setting);
+      if (!apiUrl) {
+        this.log('info', 'No API URL configured, using default for the provider.');
+      }
+    } else {
+      this.log('info', 'Using VS Code language model API (GitHub Copilot). API URL and keys are ignored.');
     }
 
     this.log('info', `Testing prompt with ${this.isChatting ? 'chat model' : 'text completion model'}: ${fileUrl}`);
@@ -159,6 +180,7 @@ export class TestCommand implements Command {
 
     let timer = setTimeout(showProgress, nextInterval * 1000);
     let result: string[] = [];
+
     try {
       const prompt = await this.renderPrompt(uri);
       const setting = this.getLanguageModelSettings(uri);
@@ -239,7 +261,9 @@ export class TestCommand implements Command {
     const provider = runtime?.provider || settings.provider;
     const apiUrl = this.getProviderApiUrl(settings, runtime);
 
-    if (provider === 'microsoft' && apiUrl?.includes('.models.ai.azure.com')) {
+    if (provider === 'vscode') {
+      yield* this.vscodeModelStream(prompt, settings);
+    } else if (provider === 'microsoft' && apiUrl?.includes('.models.ai.azure.com')) {
       yield* this.azureAiStream(prompt.content as Message[], settings, runtime);
     } else if (prompt.responseSchema && (!prompt.tools || prompt.tools.length === 0)) {
       yield* this.handleResponseSchemaStream(prompt, settings);
@@ -390,6 +414,45 @@ export class TestCommand implements Command {
     usageInfo += ']';
 
     return usageInfo;
+  }
+
+  private async *vscodeModelStream(prompt: PreviewResponse, settings: LanguageModelSetting): AsyncGenerator<string> {
+    if (!('lm' in vscode) || typeof vscode.lm?.selectChatModels !== 'function') {
+      throw new Error('VS Code language model API is not available.');
+    }
+    const modelSelector = {
+      vendor: 'copilot',
+      family: prompt.runtime?.model || settings.model,
+    };
+    this.log('info', `Selecting VS Code language model with ${JSON.stringify(modelSelector)}`);
+    const models = await vscode.lm.selectChatModels(modelSelector);
+    if (!models.length) {
+      throw new Error(`No VS Code language models available with selector: ${JSON.stringify(modelSelector)}`);
+    } else if (models.length > 1) {
+      this.log('info', `Multiple VS Code language models found. The first one will be used: ${JSON.stringify(models)}`);
+    }
+
+    const model = models[0];
+    const signal = GenerationController.getNewCancellationToken();
+
+    const vscodePrompt = this.isChatting
+      ? this.pomlMessagesToVsCodeMessage(prompt.content as Message[])
+      : [vscode.LanguageModelChatMessage.User(prompt.content as string)];
+
+    const options = {
+      justification: 'Initiated by POML extension for VS Code',
+      tools: prompt.tools ? this.toVsCodeTools(prompt.tools) : [],
+    };
+
+    const response = await model.sendRequest(vscodePrompt, options, signal.token);
+
+    for await (const chunk of response.stream) {
+      if ((chunk as any).value) {
+        yield (chunk as any).value;
+      } else {
+        yield JSON.stringify(chunk);
+      }
+    }
   }
 
   private async *azureAiStream(
@@ -645,6 +708,132 @@ export class TestCommand implements Command {
         content: msg.content,
       };
     });
+  }
+
+  /**
+   * Convert POML messages to VS Code LanguageModelChatMessage format
+   * Handles role mapping, content conversion, and message merging for the VS Code API
+   */
+  private pomlMessagesToVsCodeMessage(messages: Message[]): vscode.LanguageModelChatMessage[] {
+    // Convert each POML message to VS Code format
+    const vscodeMessage = messages.map((msg) => {
+      // Map POML speaker types to VS Code roles
+      let role: vscode.LanguageModelChatMessageRole;
+
+      switch (msg.speaker) {
+        case 'human':
+          // Human messages map directly to User role
+          role = vscode.LanguageModelChatMessageRole.User;
+          break;
+        case 'ai':
+          // AI messages map to Assistant role
+          role = vscode.LanguageModelChatMessageRole.Assistant;
+          break;
+        case 'tool': // Tool responses are typically treated as user response messages in VS Code
+        case 'system':
+          // VS Code doesn't have a direct system role, treat as user
+          // This ensures tool responses and system messages are properly handled
+          role = vscode.LanguageModelChatMessageRole.User;
+          break;
+        default:
+          // Default to user for unknown speakers
+          role = vscode.LanguageModelChatMessageRole.User;
+      }
+
+      // Convert POML RichContent to VS Code message content parts
+      // This handles text, images, tool calls, and tool results
+      const content = this.richContentToVsCodeMessageContent(msg.content);
+
+      if (content.length === 1 && 'value' in content[0]) {
+        return new vscode.LanguageModelChatMessage(role, content[0].value);
+      } else {
+        return new vscode.LanguageModelChatMessage(role, content);
+      }
+    });
+
+    // TODO: Merge consecutive messages from the same role
+    return vscodeMessage;
+  }
+
+  /**
+   * Convert POML RichContent to VS Code message content parts
+   * Handles various content types including text, images, tool calls, and tool results
+   */
+  private richContentToVsCodeMessageContent(
+    content: RichContent,
+  ): (vscode.LanguageModelTextPart | vscode.LanguageModelToolResultPart | vscode.LanguageModelToolCallPart)[] {
+    // Handle simple string content
+    if (typeof content === 'string') {
+      return [{ value: content }];
+    }
+
+    // Helper function to flatten nested content structures into a string
+    // Used for tool results which need to be stringified
+    const flattenMessageContent = (content: any): string => {
+      if (typeof content === 'string') {
+        return content;
+      } else if (Array.isArray(content)) {
+        // Recursively flatten array elements and join with newlines
+        return content.map(flattenMessageContent).join('\n');
+      } else if (typeof content === 'object' && 'value' in content) {
+        // Extract and flatten the value property
+        return flattenMessageContent(content.value);
+      } else {
+        // Fallback: stringify any other content type
+        return JSON.stringify(content);
+      }
+    };
+
+    // Process each part of the rich content array
+    return content.map((part) => {
+      if (typeof part === 'string') {
+        // Handle plain text parts
+        return { value: part } satisfies vscode.LanguageModelTextPart;
+      } else if (part.type.startsWith('image/')) {
+        // Handle image content (with limitations)
+        const binaryPart = part as ContentMultiMediaBinary;
+        // VS Code API doesn't fully support images, use placeholder text
+        this.log('warn', 'Images in messages are not fully supported in VS Code chat API. Using placeholder text.');
+        return { value: `[Image: ${binaryPart.alt || 'unsupported in text'}]` } satisfies vscode.LanguageModelTextPart;
+      } else if (part.type === 'application/vnd.poml.toolrequest') {
+        // Handle tool call requests
+        const toolRequest = part as ContentMultiMediaToolRequest;
+        return {
+          callId: toolRequest.id,
+          name: toolRequest.name,
+          input: toolRequest.content,
+        } satisfies vscode.LanguageModelToolCallPart;
+      } else if (part.type === 'application/vnd.poml.toolresponse') {
+        // Handle tool call responses
+        const toolResponse = part as ContentMultiMediaToolResponse;
+        // Tool results need to be flattened to string format
+        return {
+          callId: toolResponse.id,
+          content: [flattenMessageContent(this.richContentToVercelToolResult(toolResponse.content))],
+        } satisfies vscode.LanguageModelToolResultPart;
+      } else {
+        // Throw error for unsupported content types
+        throw new Error(`Unsupported content type: ${part.type}`);
+      }
+    });
+  }
+
+  private toVsCodeTools(tools: { [key: string]: any }[]) {
+    const result: vscode.LanguageModelChatTool[] = [];
+    for (const t of tools) {
+      if (!t.name || !t.parameters) {
+        throw new Error(`Tool must have name and parameters: ${JSON.stringify(t)}`);
+      }
+      if (t.type !== 'function') {
+        throw new Error(`Unsupported tool type: ${t.type}. Only 'function' type is supported.`);
+      }
+      result.push({
+        name: t.name,
+        description: t.description,
+        inputSchema: t.parameters,
+      });
+    }
+    return result;
   }
 
   private getLanguageModelSettings(uri: vscode.Uri) {
