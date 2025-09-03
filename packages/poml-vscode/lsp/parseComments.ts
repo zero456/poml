@@ -278,14 +278,15 @@ ${paramsString},
     ):
         ${docstring}
         ${methodBody}
-    `;
+`;
 }
 
 function generatePythonFile(jsonData: ComponentSpec[]): string {
-  let pythonCode = `# This file is auto-generated from component documentation.
+  let pythonCode = `# fmt: off
+# This file is auto-generated from component documentation.
 # Do not edit manually. Run \`npm run build-comment\` to regenerate.
 
-from typing import Optional, Any, Union, List, Dict
+from typing import Optional, Any, Union, List, Dict  # isort:skip
 # from numbers import Number # For more specific number types if needed
 
 class _TagLib:
