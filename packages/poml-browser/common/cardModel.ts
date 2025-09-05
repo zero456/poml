@@ -1,9 +1,9 @@
 /**
  * Card Model Types for POML Browser Extension
- * Replaces ExtractedContent with a more flexible and structured system
+ * Provides a flexible and structured card system for content management
  */
 
-import { binaryToBase64, arrayBufferToDataURL } from './utils';
+import { binaryToBase64, binaryToDataURL } from './utils/base64';
 
 // POML Component Types based on docs/components.md
 export type POMLComponentType =
@@ -323,25 +323,6 @@ export function createCardCollection(cards: CardModel[] = []): CardCollection {
   };
 }
 
-// Helper to convert from old ExtractedContent to new CardModel
-export function fromExtractedContent(content: any): CardModel {
-  return createCard({
-    id: content.id,
-    title: content.title,
-    content: {
-      type: 'text',
-      value: content.content || content.excerpt || '',
-    },
-    metadata: {
-      source: content.isManual ? 'manual' : 'web',
-      url: content.url,
-      excerpt: content.excerpt,
-      debug: content.debug,
-    },
-    timestamp: content.timestamp,
-  });
-}
-
 // ID generation utility
 export function generateId(): string {
   return `card-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
@@ -432,7 +413,7 @@ export function getBinaryContentDataUrl(content: BinaryContent): string | null {
   }
 
   if (content.value instanceof ArrayBuffer) {
-    return arrayBufferToDataURL(content.value, content.mimeType || 'application/octet-stream');
+    return binaryToDataURL(content.value, content.mimeType || 'application/octet-stream');
   } else {
     return `data:${content.mimeType || 'application/octet-stream'};base64,${content.value}`;
   }
